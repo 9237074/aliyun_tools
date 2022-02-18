@@ -1,0 +1,14 @@
+{
+	"main": "index.html",
+	"logo": "logo.png",
+	"preload": "./preload.js",
+	"features": [
+		{
+			"code": "rds",
+			"explain": "阿里云rds工具",
+			"cmds": [
+				"rds"
+			]
+		}
+	]
+}

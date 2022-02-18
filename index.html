@@ -1,0 +1,50 @@
+<html lang="en">
+  <head>
+    <title>Document</title>
+  </head>
+  <style>
+    body {
+      background-color: aliceblue;
+    }
+  </style>
+  <body>
+    <div>
+      <h2 style="display: inline">阿里云RDS工具</h2>
+      <div style="display: inline-block; width: 20px"></div>
+      <button onclick="refresh()">刷新</button>
+      <hr />
+    </div>
+    <div id="error"></div>
+    <div id="app"></div>
+    <script>
+      async function refresh() {
+        const ipList = await window.getIpList();
+        const fuzhou = ipList.DBInstanceIPArray.find(
+          (row) => row.DBInstanceIPArrayName === "fuzhou"
+        );
+        const fuzhouSecurityIPList = fuzhou.securityIPList;
+        const localIP = await window.getPulbicIpV4();
+        if (fuzhouSecurityIPList.split(",").includes(localIP)) {
+          document.querySelector("#app").innerHTML = "";
+          document.querySelector("#error").innerHTML = `<div>
+            <div>当前本地 ${localIP} 已经存在</div>
+            <div>fuzhou分组白名单中</div>
+            <div>${fuzhouSecurityIPList.split(",").join(" ")}</div>
+            </div>`;
+          return;
+        }
+        const addSecurityIps = fuzhouSecurityIPList + "," + localIP;
+        const res = await window.addLocalIp2IpList(addSecurityIps);
+        document.querySelector("#app").innerHTML = `<div>
+            <div>当前本地 ${localIP}</div>
+            <div>fuzhou分组白名单中</div>
+            <div>${addSecurityIps.split(",").join(" ")}</div>
+            </div>`;
+      }
+      (async () => {
+        window.test();
+        await refresh();
+      })();
+    </script>
+  </body>
+</html>
