@@ -1,50 +1,84 @@
-<html lang="en">
+<html lang="zh-cn">
   <head>
-    <title>Document</title>
+    <title>阿里云RDS工具</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.7.0-beta.5/vue.min.js"></script>
   </head>
   <style>
     body {
       background-color: aliceblue;
     }
+    .flex {
+      display: flex;
+    }
   </style>
   <body>
-    <div>
-      <h2 style="display: inline">阿里云RDS工具</h2>
-      <div style="display: inline-block; width: 20px"></div>
-      <button onclick="refresh()">刷新</button>
-      <hr />
+    <div id="app">
+      <h1>阿里云RDS工具</h1>
+      <div>
+        <div class="flex">
+          <div style="flex: 1">当前IP: {{ip}}</div>
+          <div>
+            <input type="text" v-model="inputIp" />
+            <button @click="addMqWhiteList(inputIp)">添加</button>
+          </div>
+        </div>
+        <div>福州分组中IP白名单列表 <button @click="refresh">刷新</button></div>
+        <div style="display: flex; flex-wrap: wrap">
+          <div
+            v-for="(item, index) in fuzhouList"
+            :key="item"
+            style="margin-right: 10px"
+            :style="ip === item || inputIp === item? 'font-weight:bold;color: #DC143C':''"
+          >
+            {{item}}
+          </div>
+        </div>
+      </div>
     </div>
-    <div id="error"></div>
-    <div id="app"></div>
     <script>
-      async function refresh() {
-        const ipList = await window.getIpList();
-        const fuzhou = ipList.DBInstanceIPArray.find(
-          (row) => row.DBInstanceIPArrayName === "fuzhou"
-        );
-        const fuzhouSecurityIPList = fuzhou.securityIPList;
-        const localIP = await window.getPulbicIpV4();
-        if (fuzhouSecurityIPList.split(",").includes(localIP)) {
-          document.querySelector("#app").innerHTML = "";
-          document.querySelector("#error").innerHTML = `<div>
-            <div>当前本地 ${localIP} 已经存在</div>
-            <div>fuzhou分组白名单中</div>
-            <div>${fuzhouSecurityIPList.split(",").join(" ")}</div>
-            </div>`;
-          return;
-        }
-        const addSecurityIps = fuzhouSecurityIPList + "," + localIP;
-        const res = await window.addLocalIp2IpList(addSecurityIps);
-        document.querySelector("#app").innerHTML = `<div>
-            <div>当前本地 ${localIP}</div>
-            <div>fuzhou分组白名单中</div>
-            <div>${addSecurityIps.split(",").join(" ")}</div>
-            </div>`;
-      }
-      (async () => {
-        window.test();
-        await refresh();
-      })();
+      const app = new Vue({
+        el: "#app",
+        data: () => {
+          return {
+            ip: "loading",
+            inputIp: "",
+            fuzhouList: [],
+          };
+        },
+        mounted() {
+          console.log("mounted");
+          window.test()
+          this.refresh();
+        },
+        methods: {
+          refresh: async function () {
+            console.log("refresh");
+            let localIp = "";
+            try {
+              localIP = await window.getPulbicIpV4();
+            } catch (error) {
+              localIP = await fetch("http://members.3322.org/dyndns/getip")
+                .then((res) => res.text())
+                .then((res) => res.replace(/\n/g, ""));
+            }
+            this.ip = localIP;
+            await this.addMqWhiteList(this.ip);
+          },
+          addMqWhiteList: async function (ip) {
+            console.log(`新增加IP白名单: ${ip}`);
+            const ipList = await window.getIpList();
+            const fuzhou = ipList.DBInstanceIPArray.find(
+              (row) => row.DBInstanceIPArrayName === "fuzhou"
+            );
+            const fuzhouSecurityIPList = fuzhou.securityIPList;
+            this.fuzhouList = fuzhouSecurityIPList.split(",");
+            if (!fuzhouSecurityIPList.includes(ip)) {
+              await window.addLocalIp2IpList(fuzhouSecurityIPList + "," + ip);
+              this.refresh();
+            }
+          },
+        },
+      });
     </script>
   </body>
 </html>
