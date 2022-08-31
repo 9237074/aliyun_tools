@@ -4,6 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
+    "watch": "webpack --watch",
     "build": "webpack build"
   },
   "dependencies": {

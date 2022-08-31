@@ -37,5 +37,5 @@ export const addLocalIp2IpList = async (
     securityIps,
   });
   // 复制代码运行请自行打印 API 的返回值
-  await client.modifySecurityIps(modifySecurityIpsRequest);
+  return client.modifySecurityIps(modifySecurityIpsRequest);
 };

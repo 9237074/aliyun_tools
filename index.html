@@ -47,20 +47,25 @@
         },
         mounted() {
           console.log("mounted");
-          window.test()
+          window.test();
           this.refresh();
         },
         methods: {
           refresh: async function () {
             console.log("refresh");
-            let localIp = "";
-            try {
-              localIP = await window.getPulbicIpV4();
-            } catch (error) {
-              localIP = await fetch("http://members.3322.org/dyndns/getip")
-                .then((res) => res.text())
-                .then((res) => res.replace(/\n/g, ""));
-            }
+            // let localIp = "";
+            // try {
+            //   localIP = await window.getPulbicIpV4();
+            // } catch (error) {
+            //   localIP = await fetch("https://dxxq-0gu9zl9a66ca3504-1258554675.ap-shanghai.app.tcloudbase.com/getRequestIP")
+            //     .then((res) => res.json())
+            //     .then(res => res.real_ip)
+            // }
+            const localIP = await fetch(
+              "https://dxxq-0gu9zl9a66ca3504-1258554675.ap-shanghai.app.tcloudbase.com/getRequestIP"
+            )
+              .then((res) => res.json())
+              .then((res) => res.real_ip);
             this.ip = localIP;
             await this.addMqWhiteList(this.ip);
           },
@@ -72,8 +77,19 @@
             );
             const fuzhouSecurityIPList = fuzhou.securityIPList;
             this.fuzhouList = fuzhouSecurityIPList.split(",");
-            if (!fuzhouSecurityIPList.includes(ip)) {
-              await window.addLocalIp2IpList(fuzhouSecurityIPList + "," + ip);
+            console.log({
+              fuzhouList: this.fuzhouList,
+              isTrue: this.fuzhouList.includes(ip),
+            });
+            if (!this.fuzhouList.includes(ip)) {
+              await window
+                .addLocalIp2IpList(fuzhouSecurityIPList + "," + ip)
+                .then((res) => {
+                  console.log({ res });
+                })
+                .catch((err) => {
+                  console.log(err);
+                });
               this.refresh();
             }
           },
